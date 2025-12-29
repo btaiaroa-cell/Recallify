@@ -8,7 +8,7 @@ function App() {
   async function testAI() {
     setStatus('Testing AI Connection...');
     try {
-      // Switched from v1beta to v1 for stability
+      // Switch to v1 for stability
       const resp = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -31,7 +31,7 @@ function App() {
 
   return (
     <div style={{ padding: '40px', textAlign: 'center', fontFamily: 'sans-serif' }}>
-      <h1>Recallify Connection Test</h1>
+    <h1>Recallify TEST NUMBER TWO</h1>
       <div style={{ marginBottom: '20px', padding: '20px', background: '#f0f0f0', borderRadius: '10px' }}>
         <strong>Status:</strong> {status}
       </div>
