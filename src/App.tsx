@@ -1,84 +1,76 @@
 import React, { useState } from 'react'
 
-// Updated to the newest 2.0 model to avoid "Not Found" errors
-const GOOGLE_MODEL = 'gemini-2.0-flash'
+const GOOGLE_MODEL = 'gemini-1.5-flash-latest'
 const API_BASE = 'https://generativelanguage.googleapis.com/v1beta'
 
 export default function App() {
-  const [prompt, setPrompt] = useState('Give me a friendly 2-line summary of why taking notes helps memory')
-  const [response, setResponse] = useState<string | null>(null)
+  const [prompt, setPrompt] = useState('I put 5 hammers in the garage')
+  const [status, setStatus] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   
-  // This looks for your Vercel secret key
   const apiKey = import.meta.env.VITE_GOOGLE_API_KEY
+  const sheetUrl = import.meta.env.VITE_SHEET_URL
 
-  async function handleGenerate() {
-    setResponse(null)
+  async function handleInventoryAdd() {
+    setStatus('AI is processing...')
     setLoading(true)
     try {
-      if (!apiKey) throw new Error('API Key missing. Check Vercel Settings!')
+      // 1. Tell Gemini to act like a Sortly assistant
+      const aiUrl = `${API_BASE}/models/${GOOGLE_MODEL}:generateContent?key=${apiKey}`
+      const aiInstruction = `Extract inventory data from this text: "${prompt}". 
+      Respond ONLY with a JSON object like this: 
+      {"itemName": "string", "category": "string", "quantity": number, "location": "string"}`
 
-      // The standard Google AI Studio URL format
-      const url = `${API_BASE}/models/${GOOGLE_MODEL}:generateContent?key=${apiKey}`
-      
-      const res = await fetch(url, {
+      const aiRes = await fetch(aiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
+        body: JSON.stringify({ contents: [{ parts: [{ text: aiInstruction }] }] })
       })
 
-      const data = await res.json()
+      const aiData = await aiRes.json()
+      const rawText = aiData?.candidates?.[0]?.content?.parts?.[0]?.text || ""
       
-      if (!res.ok) {
-        throw new Error(data.error?.message || `API Error: ${res.status}`)
-      }
+      // Clean up the AI response to get just the JSON
+      const jsonStr = rawText.replace(/```json|```/g, "").trim()
+      const inventoryData = JSON.parse(jsonStr)
 
-      // Extract the text answer from Gemini's response structure
-      const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response received"
-      setResponse(aiText)
+      // 2. Send that data to your Google Sheet
+      setStatus('Saving to Spreadsheet...')
+      const sheetRes = await fetch(sheetUrl, {
+        method: 'POST',
+        mode: 'no-cors', // Needed for Google Apps Script
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(inventoryData)
+      })
+
+      setStatus(`✅ Success! Added ${inventoryData.quantity} ${inventoryData.itemName} to ${inventoryData.location}.`)
     } catch (err: any) {
-      setResponse(`Error: ${err.message}`)
+      setStatus(`Error: ${err.message}`)
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div style={{ padding: '24px', maxWidth: '700px', margin: 'auto', fontFamily: 'Arial, sans-serif' }}>
-      <h1 style={{ color: '#2c3e50' }}>Recallify — AI Test</h1>
-      <p>Enter a prompt below and click Generate to test the connection.</p>
-      
-      <textarea 
-        style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ccc', fontSize: '16px' }} 
-        rows={4} 
-        value={prompt} 
-        onChange={(e) => setPrompt(e.target.value)} 
+    <div style={{ padding: '24px', maxWidth: '600px', margin: 'auto', fontFamily: 'sans-serif' }}>
+      <h1>Recallify Sortly-Lite</h1>
+      <p>What did you put away?</p>
+      <input 
+        style={{ width: '100%', padding: '12px', marginBottom: '10px', borderRadius: '8px', border: '1px solid #ccc' }}
+        value={prompt}
+        onChange={(e) => setPrompt(e.target.value)}
       />
+      <button 
+        onClick={handleInventoryAdd} 
+        disabled={loading}
+        style={{ width: '100%', padding: '12px', background: '#27ae60', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+      >
+        {loading ? 'Processing...' : 'Add to Inventory'}
+      </button>
       
-      <div style={{ marginTop: '12px' }}>
-        <button 
-          onClick={handleGenerate} 
-          disabled={loading} 
-          style={{ 
-            padding: '10px 24px', 
-            backgroundColor: loading ? '#95a5a6' : '#3498db', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: '4px', 
-            cursor: 'pointer',
-            fontSize: '16px'
-          }}
-        >
-          {loading ? 'Thinking...' : 'Generate Response'}
-        </button>
-      </div>
-
-      {response && (
-        <div style={{ marginTop: '20px', padding: '16px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '4px solid #3498db' }}>
-          <strong>AI Response:</strong>
-          <div style={{ marginTop: '8px', lineHeight: '1.6' }}>{response}</div>
+      {status && (
+        <div style={{ marginTop: '20px', padding: '15px', background: '#f0f0f0', borderRadius: '8px' }}>
+          {status}
         </div>
       )}
     </div>
