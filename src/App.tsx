@@ -8,14 +8,26 @@ function App() {
   async function testAI() {
     setStatus('Testing AI Connection...');
     try {
-      // Switch to v1 for stability
-      const resp = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      // We are changing the model name to 'gemini-pro'
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           contents: [{ parts: [{ text: "Hello" }] }] 
         })
       });
+      
+      const data = await resp.json();
+      
+      if (data.error) {
+        throw new Error(data.error.message);
+      }
+      
+      setStatus('✅ SUCCESS! The AI is linked. Now we can build the inventory.');
+    } catch (err: any) {
+      setStatus(`❌ AI Error: ${err.message}`);
+    }
+  }
       
       const data = await resp.json();
       
