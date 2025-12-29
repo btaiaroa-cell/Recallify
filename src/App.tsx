@@ -8,7 +8,7 @@ function App() {
   async function testAI() {
     setStatus('Testing AI Connection...');
     try {
-      // We are changing the model name to 'gemini-pro'
+      // Changing the model to gemini-pro which is the most widely supported
       const resp = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -23,7 +23,7 @@ function App() {
         throw new Error(data.error.message);
       }
       
-      setStatus('✅ SUCCESS! The AI is linked. Now we can build the inventory.');
+      setStatus('✅ SUCCESS! The AI is linked.');
     } catch (err: any) {
       setStatus(`❌ AI Error: ${err.message}`);
     }
