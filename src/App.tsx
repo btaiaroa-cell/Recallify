@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 
-// Modern Gemini API settings
-const GOOGLE_MODEL = 'gemini-1.5-flash'
+// Updated to the newest 2.0 model to avoid "Not Found" errors
+const GOOGLE_MODEL = 'gemini-2.0-flash'
 const API_BASE = 'https://generativelanguage.googleapis.com/v1beta'
 
 export default function App() {
@@ -9,39 +9,35 @@ export default function App() {
   const [response, setResponse] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   
-  // This grabs your Vercel Key
+  // This looks for your Vercel secret key
   const apiKey = import.meta.env.VITE_GOOGLE_API_KEY
 
   async function handleGenerate() {
     setResponse(null)
     setLoading(true)
     try {
-      if (!apiKey) throw new Error('VITE_GOOGLE_API_KEY is not set in Vercel settings')
+      if (!apiKey) throw new Error('API Key missing. Check Vercel Settings!')
 
-      // Modern URL for Gemini 1.5
+      // The standard Google AI Studio URL format
       const url = `${API_BASE}/models/${GOOGLE_MODEL}:generateContent?key=${apiKey}`
       
-      const body = {
-        "contents": [{
-          "parts": [{ "text": prompt }]
-        }]
-      }
-
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
       })
 
+      const data = await res.json()
+      
       if (!res.ok) {
-        const text = await res.text()
-        throw new Error(`API error: ${res.status} ${text}`)
+        throw new Error(data.error?.message || `API Error: ${res.status}`)
       }
 
-      const data = await res.json()
-      // Extracting text from the modern Gemini response format
-      const out = data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response received"
-      setResponse(out)
+      // Extract the text answer from Gemini's response structure
+      const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response received"
+      setResponse(aiText)
     } catch (err: any) {
       setResponse(`Error: ${err.message}`)
     } finally {
@@ -50,23 +46,39 @@ export default function App() {
   }
 
   return (
-    <div style={{ padding: 24, fontFamily: 'Arial, sans-serif' }}>
-      <h1>Recallify — AI test</h1>
-      <textarea
-        value={prompt}
-        onChange={(e) => setPrompt(e.target.value)}
-        rows={4}
-        style={{ width: '100%', fontSize: 14 }}
+    <div style={{ padding: '24px', maxWidth: '700px', margin: 'auto', fontFamily: 'Arial, sans-serif' }}>
+      <h1 style={{ color: '#2c3e50' }}>Recallify — AI Test</h1>
+      <p>Enter a prompt below and click Generate to test the connection.</p>
+      
+      <textarea 
+        style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ccc', fontSize: '16px' }} 
+        rows={4} 
+        value={prompt} 
+        onChange={(e) => setPrompt(e.target.value)} 
       />
-      <div style={{ marginTop: 12 }}>
-        <button onClick={handleGenerate} disabled={loading}>
-          {loading ? 'Generating…' : 'Generate'}
+      
+      <div style={{ marginTop: '12px' }}>
+        <button 
+          onClick={handleGenerate} 
+          disabled={loading} 
+          style={{ 
+            padding: '10px 24px', 
+            backgroundColor: loading ? '#95a5a6' : '#3498db', 
+            color: 'white', 
+            border: 'none', 
+            borderRadius: '4px', 
+            cursor: 'pointer',
+            fontSize: '16px'
+          }}
+        >
+          {loading ? 'Thinking...' : 'Generate Response'}
         </button>
       </div>
+
       {response && (
-        <div style={{ marginTop: 16, whiteSpace: 'pre-wrap', background: '#f6f8fa', padding: 12 }}>
-          <strong>Response:</strong>
-          <div>{response}</div>
+        <div style={{ marginTop: '20px', padding: '16px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '4px solid #3498db' }}>
+          <strong>AI Response:</strong>
+          <div style={{ marginTop: '8px', lineHeight: '1.6' }}>{response}</div>
         </div>
       )}
     </div>
