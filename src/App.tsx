@@ -8,14 +8,17 @@ function App() {
   async function testAI() {
     setStatus('Testing AI Key...');
     try {
-      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      // Changed 'v1beta' to 'v1' and made sure the model name is standard
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contents: [{ parts: [{ text: "Say 'Hello World'" }] }] })
       });
+      
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
-      setStatus('✅ AI is working! Your connection is fixed.');
+      
+      setStatus('✅ SUCCESS! The AI is talking to us.');
     } catch (err: any) {
       setStatus(`❌ AI Error: ${err.message}`);
     }
