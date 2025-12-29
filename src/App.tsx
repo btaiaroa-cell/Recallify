@@ -8,7 +8,7 @@ function App() {
   async function testAI() {
     setStatus('Testing AI Connection...');
     try {
-      // Changing the model to gemini-pro which is the most widely supported
+      // Using gemini-pro: the most stable and widely available model
       const resp = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -23,19 +23,7 @@ function App() {
         throw new Error(data.error.message);
       }
       
-      setStatus('✅ SUCCESS! The AI is linked.');
-    } catch (err: any) {
-      setStatus(`❌ AI Error: ${err.message}`);
-    }
-  }
-      
-      const data = await resp.json();
-      
-      if (data.error) {
-        throw new Error(data.error.message);
-      }
-      
-      setStatus('✅ SUCCESS! The AI is linked. Now we can build the inventory.');
+      setStatus('✅ SUCCESS! The AI is linked. Take your break!');
     } catch (err: any) {
       setStatus(`❌ AI Error: ${err.message}`);
     }
@@ -43,7 +31,7 @@ function App() {
 
   return (
     <div style={{ padding: '40px', textAlign: 'center', fontFamily: 'sans-serif' }}>
-    <h1>Recallify TEST THREE</h1>
+      <h1>Recallify FINAL TEST</h1>
       <div style={{ marginBottom: '20px', padding: '20px', background: '#f0f0f0', borderRadius: '10px' }}>
         <strong>Status:</strong> {status}
       </div>
